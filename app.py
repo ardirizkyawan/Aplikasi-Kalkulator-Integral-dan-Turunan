@@ -3,56 +3,59 @@ import sympy as sp
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Setup awal
-st.set_page_config(page_title="Kalkulator Integral dan Turunan", layout="centered")
+# Inisialisasi simbol x
+x = sp.Symbol('x')
 
 st.title("🧮 Kalkulator Integral dan Turunan")
-st.write("Aplikasi ini menghitung turunan dan integral dari fungsi aljabar menggunakan Python + Streamlit.")
+st.write("Aplikasi ini menghitung turunan atau integral dari fungsi matematika aljabar.")
+
+# Contoh fungsi bawaan
+contoh_fungsi = {
+    "x**2": "x**2",
+    "sin(x)": "sin(x)",
+    "e**x": "exp(x)",
+    "1/x": "1/x"
+}
 
 # Input fungsi
-user_input = st.text_input("Masukkan fungsi aljabar (gunakan x sebagai variabel):", "x**2 + 3*x + 2")
+fungsi_input = st.text_input("Masukkan fungsi f(x):", value="x**2")
 
-# Simbol
-x = sp.symbols('x')
+# Pilihan contoh
+st.markdown("Atau pilih contoh fungsi:")
+contoh_dipilih = st.selectbox("Contoh Fungsi:", list(contoh_fungsi.keys()))
+if contoh_dipilih:
+    fungsi_input = contoh_fungsi[contoh_dipilih]
+
+# Pilih operasi
+operasi = st.radio("Pilih Operasi:", ("Turunan", "Integral Tak Tentu", "Integral Tentu"))
+
+# Hitung turunan/integral
 try:
-    fungsi = sp.sympify(user_input)
+    fungsi = sp.sympify(fungsi_input)
+    
+    if operasi == "Turunan":
+        hasil = sp.diff(fungsi, x)
+        st.latex(f"f'(x) = {sp.latex(hasil)}")
 
-    # Hitung turunan dan integral
-    turunan = sp.diff(fungsi, x)
-    integral = sp.integrate(fungsi, x)
+    elif operasi == "Integral Tak Tentu":
+        hasil = sp.integrate(fungsi, x)
+        st.latex(f"\\int f(x)\\,dx = {sp.latex(hasil)} + C")
 
-    # Tampilkan hasil simbolik
-    st.subheader("📘 Hasil Simbolik")
-    st.latex(f"f(x) = {sp.latex(fungsi)}")
-    st.latex(f"f'(x) = {sp.latex(turunan)}")
-    st.latex(f"\\int f(x) dx = {sp.latex(integral)} + C")
+    elif operasi == "Integral Tentu":
+        a = st.number_input("Batas bawah (a):", value=0.0)
+        b = st.number_input("Batas atas (b):", value=1.0)
+        hasil = sp.integrate(fungsi, (x, a, b))
+        st.latex(f"\\int_{{{a}}}^{{{b}}} f(x)\\,dx = {sp.latex(hasil)}")
 
-    # Evaluasi numerik pada titik tertentu
-    st.subheader("🔢 Evaluasi Numerik")
-    eval_point = st.number_input("Masukkan nilai x untuk evaluasi:", value=1.0)
-    f_val = fungsi.evalf(subs={x: eval_point})
-    f_prime_val = turunan.evalf(subs={x: eval_point})
-    st.write(f"f({eval_point}) = {f_val}")
-    st.write(f"f'({eval_point}) = {f_prime_val}")
+    # Tampilkan grafik
+    st.subheader("📈 Grafik Fungsi")
+    f_np = sp.lambdify(x, fungsi, "numpy")
+    x_vals = np.linspace(-10, 10, 400)
+    y_vals = f_np(x_vals)
 
-    # Grafik fungsi dan turunannya
-    st.subheader("📈 Grafik Fungsi dan Turunannya")
-    x_vals = np.linspace(float(eval_point) - 10, float(eval_point) + 10, 400)
-    f_lambd = sp.lambdify(x, fungsi, modules=['numpy'])
-    f_prime_lambd = sp.lambdify(x, turunan, modules=['numpy'])
-
-    y_vals = f_lambd(x_vals)
-    y_prime_vals = f_prime_lambd(x_vals)
-
-    plt.figure(figsize=(8, 4))
-    plt.plot(x_vals, y_vals, label='f(x)', color='blue')
-    plt.plot(x_vals, y_prime_vals, label="f'(x)", color='red', linestyle='--')
-    plt.axhline(0, color='black', linewidth=0.5)
-    plt.title("Grafik Fungsi dan Turunannya")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend()
-    st.pyplot(plt)
-
-except Exception as e:
-    st.error(f"Terjadi kesalahan dalam pemrosesan fungsi: {e}")
+    fig, ax = plt.subplots()
+    ax.plot(x_vals, y_vals, label=f"f(x) = {fungsi_input}")
+    ax.axhline(0, color='gray', linewidth=0.5)
+    ax.axvline(0, color='gray', linewidth=0.5)
+    ax.legend()
+    st.pyplot(f
